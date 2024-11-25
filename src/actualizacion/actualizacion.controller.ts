@@ -10,8 +10,7 @@ export class ActualizacionController {
 
   @MessagePattern('createActualizacion')
   create(@Payload() createActualizacionDto: CreateActualizacionDto) {
-    const num_accion = 1; 
-    return this.actualizacionService.create(createActualizacionDto, num_accion);
+    return this.actualizacionService.create(createActualizacionDto);
   }
 
   @MessagePattern('findAllActualizacion')
@@ -26,8 +25,7 @@ export class ActualizacionController {
 
   @MessagePattern('updateActualizacion')
   update(@Payload() updateActualizacionDto: UpdateActualizacionDto) {
-    const num_accion = 1; 
-    return this.actualizacionService.update(updateActualizacionDto.id, updateActualizacionDto, num_accion);
+    return this.actualizacionService.update(updateActualizacionDto.id, updateActualizacionDto);
   }
 
   @MessagePattern('removeActualizacion')

@@ -11,25 +11,33 @@ export class ActualizacionService {
     decrypt: (data: string) => Buffer.from(data, 'base64').toString('utf8'),
   };
 
-  create(createActualizacionDto: CreateActualizacionDto, num_accion: number) {
+  create(createActualizacionDto: CreateActualizacionDto) {
     try {
-      if (num_accion === 1) {
-        const nuevaActualizacion = {
-          id: this.actualizaciones.length + 1,
-          idu_proyecto: createActualizacionDto.idu_proyecto,
-          nom_aplicacion: this.encryptionService.encrypt(`Aplicacion_${createActualizacionDto.idu_proyecto}`), // Generar nom_aplicacion automáticamente.
-          num_accion,
-        };
+      const { idu_proyecto, num_accion, numero_empleado, path_project } = createActualizacionDto;
 
-        this.actualizaciones.push(nuevaActualizacion);
+      if (!idu_proyecto || !num_accion || !numero_empleado || !path_project) {
+        throw new BadRequestException('Todos los campos son obligatorios: idu_proyecto, num_accion, numero_empleado, path_project');
+      }
 
-        return {
-          message: 'Actualización creada correctamente',
-          idu_proyecto: nuevaActualizacion.idu_proyecto,
-        };
-      } else {
+      if (num_accion !== 1) {
         throw new BadRequestException(`Acción num_accion ${num_accion} no implementada.`);
       }
+
+      const nuevaActualizacion = {
+        id: this.actualizaciones.length + 1,
+        idu_proyecto,
+        num_accion,
+        numero_empleado,
+        path_project: this.encryptionService.encrypt(path_project), // Encriptar path para almacenamiento interno.
+      };
+
+      this.actualizaciones.push(nuevaActualizacion);
+
+      return {
+        message: 'Actualización creada correctamente',
+        idu_proyecto: nuevaActualizacion.idu_proyecto,
+        numero_empleado: nuevaActualizacion.numero_empleado,
+      };
     } catch (error) {
       throw new BadRequestException(`Error al crear la actualización: ${error.message}`);
     }
@@ -38,7 +46,8 @@ export class ActualizacionService {
   findAll() {
     return this.actualizaciones.map((actualizacion) => ({
       idu_proyecto: actualizacion.idu_proyecto,
-      nom_aplicacion: this.encryptionService.decrypt(actualizacion.nom_aplicacion), // Disponible internamente.
+      numero_empleado: actualizacion.numero_empleado,
+      path_project: this.encryptionService.decrypt(actualizacion.path_project), // Desencriptar path para respuesta.
     }));
   }
 
@@ -52,35 +61,35 @@ export class ActualizacionService {
     return {
       message: 'Actualización encontrada',
       idu_proyecto: actualizacion.idu_proyecto,
-      nom_aplicacion: this.encryptionService.decrypt(actualizacion.nom_aplicacion), // Disponible internamente.
+      numero_empleado: actualizacion.numero_empleado,
+      path_project: this.encryptionService.decrypt(actualizacion.path_project), // Desencriptar path para respuesta.
     };
   }
 
-  update(id: number, updateActualizacionDto: UpdateActualizacionDto, num_accion: number) {
+  update(id: number, updateActualizacionDto: UpdateActualizacionDto) {
     const actualizacionIndex = this.actualizaciones.findIndex((item) => item.id === id);
 
     if (actualizacionIndex === -1) {
       throw new NotFoundException(`Actualización con ID ${id} no encontrada`);
     }
 
-    if (num_accion === 1) {
-      const actualizacion = this.actualizaciones[actualizacionIndex];
+    const actualizacion = this.actualizaciones[actualizacionIndex];
+    const { idu_proyecto, numero_empleado, path_project } = updateActualizacionDto;
 
-      const actualizada = {
-        ...actualizacion,
-        idu_proyecto: updateActualizacionDto.idu_proyecto || actualizacion.idu_proyecto,
-        nom_aplicacion: actualizacion.nom_aplicacion, // Mantener el dato encriptado.
-      };
+    const actualizada = {
+      ...actualizacion,
+      idu_proyecto: idu_proyecto || actualizacion.idu_proyecto,
+      numero_empleado: numero_empleado || actualizacion.numero_empleado,
+      path_project: path_project ? this.encryptionService.encrypt(path_project) : actualizacion.path_project,
+    };
 
-      this.actualizaciones[actualizacionIndex] = actualizada;
+    this.actualizaciones[actualizacionIndex] = actualizada;
 
-      return {
-        message: 'Actualización actualizada correctamente',
-        idu_proyecto: actualizada.idu_proyecto,
-      };
-    } else {
-      throw new BadRequestException(`Acción num_accion ${num_accion} no soportada en actualización.`);
-    }
+    return {
+      message: 'Actualización actualizada correctamente',
+      idu_proyecto: actualizada.idu_proyecto,
+      numero_empleado: actualizada.numero_empleado,
+    };
   }
 
   remove(id: number) {
@@ -91,11 +100,13 @@ export class ActualizacionService {
     }
 
     const idu_proyecto = this.actualizaciones[actualizacionIndex].idu_proyecto;
+    const numero_empleado = this.actualizaciones[actualizacionIndex].numero_empleado;
     this.actualizaciones.splice(actualizacionIndex, 1);
 
     return {
       message: `Actualización con ID ${id} eliminada correctamente`,
       idu_proyecto,
+      numero_empleado,
     };
   }
 }
