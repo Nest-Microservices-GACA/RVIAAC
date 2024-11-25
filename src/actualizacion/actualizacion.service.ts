@@ -6,7 +6,6 @@ import { UpdateActualizacionDto } from './dto/update-actualizacion.dto';
 export class ActualizacionService {
   private actualizaciones: any[] = [];
 
-
   private encryptionService = {
     encrypt: (data: string) => Buffer.from(data).toString('base64'),
     decrypt: (data: string) => Buffer.from(data, 'base64').toString('utf8'),
@@ -17,9 +16,8 @@ export class ActualizacionService {
       if (num_accion === 1) {
         const nuevaActualizacion = {
           id: this.actualizaciones.length + 1,
-          ...createActualizacionDto,
-          nom_aplicacion: this.encryptionService.encrypt(createActualizacionDto.nom_aplicacion),
           idu_proyecto: createActualizacionDto.idu_proyecto,
+          nom_aplicacion: this.encryptionService.encrypt(`Aplicacion_${createActualizacionDto.idu_proyecto}`), // Generar nom_aplicacion automáticamente.
           num_accion,
         };
 
@@ -27,10 +25,7 @@ export class ActualizacionService {
 
         return {
           message: 'Actualización creada correctamente',
-          actualizacion: {
-            ...nuevaActualizacion,
-            nom_aplicacion: this.encryptionService.decrypt(nuevaActualizacion.nom_aplicacion), // Desencriptado para la respuesta
-          },
+          idu_proyecto: nuevaActualizacion.idu_proyecto,
         };
       } else {
         throw new BadRequestException(`Acción num_accion ${num_accion} no implementada.`);
@@ -41,10 +36,9 @@ export class ActualizacionService {
   }
 
   findAll() {
-
     return this.actualizaciones.map((actualizacion) => ({
-      ...actualizacion,
-      nom_aplicacion: this.encryptionService.decrypt(actualizacion.nom_aplicacion),
+      idu_proyecto: actualizacion.idu_proyecto,
+      nom_aplicacion: this.encryptionService.decrypt(actualizacion.nom_aplicacion), // Disponible internamente.
     }));
   }
 
@@ -56,8 +50,9 @@ export class ActualizacionService {
     }
 
     return {
-      ...actualizacion,
-      nom_aplicacion: this.encryptionService.decrypt(actualizacion.nom_aplicacion),
+      message: 'Actualización encontrada',
+      idu_proyecto: actualizacion.idu_proyecto,
+      nom_aplicacion: this.encryptionService.decrypt(actualizacion.nom_aplicacion), // Disponible internamente.
     };
   }
 
@@ -69,23 +64,19 @@ export class ActualizacionService {
     }
 
     if (num_accion === 1) {
-   
       const actualizacion = this.actualizaciones[actualizacionIndex];
 
       const actualizada = {
         ...actualizacion,
-        ...updateActualizacionDto,
-        nom_aplicacion: this.encryptionService.encrypt(updateActualizacionDto.nom_aplicacion),
+        idu_proyecto: updateActualizacionDto.idu_proyecto || actualizacion.idu_proyecto,
+        nom_aplicacion: actualizacion.nom_aplicacion, // Mantener el dato encriptado.
       };
 
       this.actualizaciones[actualizacionIndex] = actualizada;
 
       return {
         message: 'Actualización actualizada correctamente',
-        actualizacion: {
-          ...actualizada,
-          nom_aplicacion: this.encryptionService.decrypt(actualizada.nom_aplicacion), 
-        },
+        idu_proyecto: actualizada.idu_proyecto,
       };
     } else {
       throw new BadRequestException(`Acción num_accion ${num_accion} no soportada en actualización.`);
@@ -99,8 +90,12 @@ export class ActualizacionService {
       throw new NotFoundException(`Actualización con ID ${id} no encontrada`);
     }
 
+    const idu_proyecto = this.actualizaciones[actualizacionIndex].idu_proyecto;
     this.actualizaciones.splice(actualizacionIndex, 1);
 
-    return { message: `Actualización con ID ${id} eliminada correctamente` };
+    return {
+      message: `Actualización con ID ${id} eliminada correctamente`,
+      idu_proyecto,
+    };
   }
 }
