@@ -14,34 +14,34 @@ export class ActualizacionService {
   create(createActualizacionDto: CreateActualizacionDto) {
     try {
       const { idu_proyecto, num_accion, numero_empleado, path_project } = createActualizacionDto;
-
+  
       if (!idu_proyecto || !num_accion || !numero_empleado || !path_project) {
         throw new BadRequestException('Todos los campos son obligatorios: idu_proyecto, num_accion, numero_empleado, path_project');
       }
-
+  
       if (num_accion !== 1) {
         throw new BadRequestException(`Acción num_accion ${num_accion} no implementada.`);
       }
-
+  
       const nuevaActualizacion = {
         id: this.actualizaciones.length + 1,
         idu_proyecto,
         num_accion,
         numero_empleado,
-        path_project: this.encryptionService.encrypt(path_project), // Encriptar path para almacenamiento interno.
+        path_project: this.encryptionService.encrypt(path_project), 
       };
-
+  
       this.actualizaciones.push(nuevaActualizacion);
+  
 
       return {
-        message: 'Actualización creada correctamente',
-        idu_proyecto: nuevaActualizacion.idu_proyecto,
-        numero_empleado: nuevaActualizacion.numero_empleado,
+        isProcessStarted: true,
+        message: 'Proceso IA Iniciado Correctamente',
       };
     } catch (error) {
       throw new BadRequestException(`Error al crear la actualización: ${error.message}`);
     }
-  }
+  }  
 
   findAll() {
     return this.actualizaciones.map((actualizacion) => ({
